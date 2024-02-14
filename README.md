@@ -1,4 +1,4 @@
-# Particle-Detectors-optimization-with-Deep-Learning-techniques
+# Particle Detectors optimization with Deep Learning techniques
 The research is divided into 2 phases:
 ## Phase 1
 
