@@ -1,6 +1,6 @@
 # Particle Detectors optimization with Deep Learning techniques
 The research is divided into 2 phases:
-## Phase 1
+## Phase 1 
 
 We want to answer a very basic question: can we distinguish those 4 particle species based on the pattern of energy release in an arbitrarily granular device? And if so, how does the size of the cells affect this capability?
 The «money plot» is thus one where we put on the y axis some measures of discrimination (1/2, 1/3, 1/4, 2/3, 3/4 or some combination of the six) and on the x axis the cell size, so we can find out whether there is merit in keeping the cell size below the value when information is irrecoverable.
