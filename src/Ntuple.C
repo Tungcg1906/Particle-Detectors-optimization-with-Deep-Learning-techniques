@@ -19,6 +19,7 @@
 //#include <filesystem>
 #include <sys/types.h>
 #include <dirent.h>
+#include "TStopwatch.h"
 
 #include "Edep.h"
 #include "part_info.h"
@@ -42,27 +43,41 @@ void processRootFile(const char* filename, TTree* outputTree) {
   std::vector<int> cells_in_cublet;
   std::vector<double> e_in_cell;
   std::vector<int> cell_idx;
-
+  
+  // Get the tree "Edep" and set branch addresses     
   TFile* inputFile = TFile::Open(filename);  
-
-  // Get the tree "Edep" and set branch addresses
   TTree* edepTree = dynamic_cast<TTree*>(inputFile->Get("Edep"));
   Edep* event = new Edep(edepTree);
   int entries = edepTree->GetEntries();
 
+  // Set branches for output tree
+  outputTree->Branch("cublet_idx", &cublet_idx);
+  outputTree->Branch("cells_in_cublet", &cells_in_cublet);
+  outputTree->Branch("cell_idx", &cell_idx);
+
+  bool branchesCreated = false;
   int ievent = 0;
   for (int j = 0; j < entries; ++j) {
     event->GetEntry(j);
-     
+
+    if (!branchesCreated) {
+      // Create branches for "event_id" and "edep" dynamically based on the current event
+      outputTree->Branch("event_id", &event->event_id, "event_id/I");
+      outputTree->Branch("edep", &event->edep);
+      branchesCreated = true;
+    }     
+
     if (event->event_id == ievent) {
       // Add the current entry to vectors
       e_in_cell.push_back(event->edep);
       cell_idx.push_back(event->cell_no);
-
-    } else {
+    }
+    else {
       // Fill the new Ntuples
       fill_n_tuple(cell_idx, cells_in_cublet, cublet_idx, outputTree);
-            
+      // std::cout << "event: " << event->event_id << ", energy: " << event->edep << std::endl;
+      // std::cout << "cublet index: " << cublet_idx[ievent] << ", cells in cublet: " << cells_in_cublet[ievent] << std::endl;
+      
       // Reset the iteration
       ++ievent;
       // ievent = event->event_id;
@@ -70,21 +85,12 @@ void processRootFile(const char* filename, TTree* outputTree) {
       // Clear the vectors
       e_in_cell.clear();
       cell_idx.clear();
-      //cublet_idx.clear();
-      //cells_in_cublet.clear();
-
+            
       // Add the current entry to vectors
       e_in_cell.push_back(event->edep);
-      cell_idx.push_back(event->cell_no);
+      cell_idx.push_back(event->cell_no); 
     }
   }
-
-  // Fill the n-tuple for the last event
-  fill_n_tuple(cell_idx, cells_in_cublet, cublet_idx, outputTree);
- 
-  // Clear the vectors after processing the last event
-  e_in_cell.clear();
-  cell_idx.clear();
 
   // Stop measuring time
   auto end_time = std::chrono::high_resolution_clock::now();
@@ -93,37 +99,28 @@ void processRootFile(const char* filename, TTree* outputTree) {
 }
 
 void fill_n_tuple(std::vector<int>& cell_idx, std::vector<int>& cells_in_cublet, std::vector<int>& cublet_idx, TTree* outputTree){
-
   // Clear vectors before filling with new data
-  //cublet_idx.clear();
-  //cells_in_cublet.clear();
-
-// Reserve space in vectors                                                                                                                                                                               
-  //cublet_idx.reserve(cell_idx.size());
-  //cells_in_cublet.reserve(cell_idx.size());
-
+  cublet_idx.clear(); 
+  cells_in_cublet.clear();
+  
   // Convert cell to cublet
   for (int i = 0; i < cell_idx.size(); ++i) {
     cublet_info(cell_idx[i], cublet_idx, cells_in_cublet);
   }
 
+  // Use an unordered_set for faster lookup
+  std::unordered_set<int> cubletSet(cublet_idx.begin(), cublet_idx.end());
+
   // Loop over the indices from 0 to 999
   for (int i = 0; i < 1000; ++i) {
-    // Find the cublet index in the cublet_idx vector
-    auto it = std::find(cublet_idx.begin(), cublet_idx.end(), i);
 
-    // Check if the cublet index exists in the cublet_idx vector
-    if (it != cublet_idx.end()) {
-     
-      // Get the corresponding index in the cublet_idx vector
-      int index = std::distance(cublet_idx.begin(), it);
+    // std::cout << "Checking cublet index: " << i << std::endl;
 
-      // Store cublet_id, cells_in_cublet, event_id, and edep
-      int cublet_id = cublet_idx[index];
-      int cells_in_cublet_value = cells_in_cublet[index];
-    
-      // Store the values in the output tree
+    // Check if the cublet index exists in the cubletSet
+    if (cubletSet.find(i) != cubletSet.end()) {
+      // Store cublet_id and cells_in_cublet
       outputTree->Fill();
+      // std::cout << "cublet index: " << cublet_idx[i] << ", cells in cublet: " << cells_in_cublet[i] << std::endl; 
     }
   }
 }
@@ -146,19 +143,18 @@ void cublet_info(int cell_idx, std::vector<int>& cublet_idx, std::vector<int>& c
 
   // Store the vectors
   cublet_idx.push_back(cublet_idx_info);
-  cells_in_cublet.push_back(cells_in_cublet_info);
-  
-}		
+  cells_in_cublet.push_back(cells_in_cublet_info);  
+}
 
 int main(int argc, char* argv[]) {
   const char* inputFolder = "/lustre/cmswork/xnguyen/data/";
   const char* outputFolder = "/lustre/cmswork/xnguyen/data/cublet_";
+  //const char* folders[] = {"neutron"};
   const char* folders[] = {"kaon", "neutron", "pion", "proton"};
-
+  
   for (const char* folder : folders) {
     std::string folderPath = std::string(inputFolder) + folder + "/";
     std::string outputFolderPath = std::string(outputFolder) + folder + "/";
-
     DIR* dir = opendir(folderPath.c_str());
     if (dir) {
       struct dirent* entry;
@@ -166,8 +162,8 @@ int main(int argc, char* argv[]) {
         if (entry->d_type == DT_REG && std::string(entry->d_name).find(".root") != std::string::npos) {
 	  std::string filePath = folderPath + entry->d_name;
 	  std::string outputFilePath = outputFolderPath + "cublet_" + std::string(entry->d_name);
-          
-          // Open the output file for writing
+
+	  // Open the output file for writing
           TFile outputFile(outputFilePath.c_str(), "RECREATE");
           TTree* outputTree = new TTree("outputTree", "Output Tree Description");
 
