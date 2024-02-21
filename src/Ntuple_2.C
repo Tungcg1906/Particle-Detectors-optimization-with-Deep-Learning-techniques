@@ -66,14 +66,14 @@ void processRootFile(const char* filename, TTree* outputTree) {
   int ievent = 0;
   bool data = false;
   do {
-    
+    data = false;
     e_in_cell.clear();
     cell_idx.clear();
-    for (int j = 0; j < entries; ++j) {
+    for (int j = 0; j < entries; j++) {
       event->GetEntry(j);
       if (event->event_id == ievent) {
 	// Add the current entry to vectors
-	e_in_cell.push_back(event->edep);
+ 	e_in_cell.push_back(event->edep);
 	cell_idx.push_back(event->cell_no);
 	eventID.push_back(event->event_id);
 	data = true;
@@ -83,8 +83,8 @@ void processRootFile(const char* filename, TTree* outputTree) {
     // Write out info for this event
     // Fill the new Ntuples
     fill_n_tuple (eventID, cell_idx, cells_in_cublet, cublet_idx, e_in_cell, Te_in_cell, outputTree);
-    std::cout << "event: " << event->event_id << ", energy: " << event->edep << std::endl;
-    std::cout << "cublet index: " << cublet_idx[ievent] << ", cells in cublet: " << cells_in_cublet[ievent] << std::endl;
+    //std::cout << "event: " << event->event_id << ", energy: " << event->edep << std::endl;
+    //std::cout << "cublet index: " << cublet_idx[ievent] << ", cells in cublet: " << cells_in_cublet[ievent] << std::endl;
 
     ievent++;
   } while (data);
@@ -104,25 +104,27 @@ void fill_n_tuple(std::vector<int>& eventID, std::vector<int>& cell_idx, std::ve
   cells_in_cublet.clear();
   
   // Convert cell to cublet
-  for (int i = 0; i < cell_idx.size(); ++i) {
+  for (int i = 0; i < cell_idx.size(); i++) {
     cublet_info(cell_idx[i], cublet_idx, cells_in_cublet);
   }
 
   // Collapse summing energy
-  double E;
-  for (int i = 0;  i < cublet_idx.size(); ++i) {
+  double E = 0;
+  for (int i = 0;  i < cublet_idx.size(); i++) {
     int this_cublet_pos = cublet_idx.at(i);
     int this_cell_pos    = cells_in_cublet.at(i);
-    for (int icx = 0; icx < 1000; icx++) {
-      for (int icc = 0; icc < 1000; icc++) {
+    for (int icx = 0; icx < 10; icx++) {
+      for (int icc = 0; icc < 10; icc++) {
 	if (icx == this_cublet_pos && icc == this_cell_pos) {
 	  E += e_in_cell.at(i);
 	  Te_in_cell.push_back(E);
+	  std::cout << "Total energy: " << E << std::endl;
 	}
       }
     }
   }
 }
+
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void cublet_info(int cell_idx, std::vector<int>& cublet_idx, std::vector<int>& cells_in_cublet){
