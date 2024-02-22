@@ -7,7 +7,7 @@
 void Edep::Loop()
 {
 //   In a ROOT session, you can do:
-//      root> .L /lustre/cmswork/awais/Edep.C
+//      root> .L /lustre/cmswork/xnguyen/Edep.C
 //      root> /lustre/cmswork/xnguyen/Edep t
 //      root> t.GetEntry(12); // Fill t data members with entry number 12
 //      root> t.Show();       // Show values of entry 12
