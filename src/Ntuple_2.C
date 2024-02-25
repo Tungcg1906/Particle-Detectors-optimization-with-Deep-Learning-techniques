@@ -26,10 +26,14 @@
 
 using namespace std;
 
+static int max_event = 1;
+
 // Declare function
 void processRootFile(const char* filename, TTree* outputTree);
 void fill_n_tuple(std::vector<int>& eventID, std::vector<int>& cell_idx, std::vector<int>& cells_in_cublet, 
-		  std::vector<int>& cublet_idx, std::vector<double>& e_in_cell, std::vector<double> Te_in_cell, TTree* outputTree);
+		  std::vector<int>& cublet_idx, std::vector<double>& e_in_cell, std::vector<double>& Te_in_cell,
+		  std::vector<int>& Tcublet_idx, std::vector<int>& Tcells_in_cuble, std::vector<int>& TeventID,
+		  TTree* outputTree);
 void cublet_info(int cell_idx, std::vector<int>& cublet_idx, std::vector<int>& cells_in_cublet);
 
 
@@ -44,12 +48,13 @@ void processRootFile(const char* filename, TTree* outputTree) {
   // Define vectors
   std::vector<int> cublet_idx;
   std::vector<int> cells_in_cublet;
-  std::vector<int> Tcublet_idx;
-  std::vector<int> Tcells_in_cublet;
   std::vector<double> e_in_cell;
   std::vector<int> cell_idx;
   std::vector<int> eventID;
   std::vector<double> Te_in_cell;
+  std::vector<int> Tcublet_idx;
+  std::vector<int> Tcells_in_cublet;
+  std::vector<int> TeventID;
 
   // Get the tree "Edep" and set branch addresses     
   TFile* inputFile = TFile::Open(filename);  
@@ -58,11 +63,11 @@ void processRootFile(const char* filename, TTree* outputTree) {
   int entries = edepTree->GetEntries();
 
   // Set branches for output tree
-  outputTree->Branch("cublet_idx", &Tcublet_idx);
-  outputTree->Branch("cells_in_cublet", &Tcells_in_cublet);
-  outputTree->Branch("event_id", &eventID);
-  outputTree->Branch("edep", &Te_in_cell);
-
+  outputTree->Branch("Tcublet_idx", &Tcublet_idx);
+  outputTree->Branch("Tcells_in_cublet", &Tcells_in_cublet);
+  outputTree->Branch("Tevent_id", &TeventID);
+  outputTree->Branch("Tedep", &Te_in_cell);
+  
   int ievent = 0;
   bool data = false;
   do {
@@ -77,18 +82,35 @@ void processRootFile(const char* filename, TTree* outputTree) {
 	cell_idx.push_back(event->cell_no);
 	eventID.push_back(event->event_id);
 	data = true;
-      }
+      } // end if loop
     } // end of for loop on all data file information
 
     // Write out info for this event
     // Fill the new Ntuples
-    fill_n_tuple (eventID, cell_idx, cells_in_cublet, cublet_idx, e_in_cell, Te_in_cell, outputTree);
-    //std::cout << "event: " << event->event_id << ", energy: " << event->edep << std::endl;
-    //std::cout << "cublet index: " << cublet_idx[ievent] << ", cells in cublet: " << cells_in_cublet[ievent] << std::endl;
+    fill_n_tuple (eventID, cell_idx, cells_in_cublet, cublet_idx, e_in_cell, Te_in_cell, Tcublet_idx, Tcells_in_cublet, TeventID, outputTree);
+    
+    //int tmp1 = cublet_idx[ievent];
+    //int tmp2 = cells_in_cublet[ievent];
+    // std::cout << "cublet index: " << tmp1 << ", cells in cublet: " << tmp2 << std::endl;
+    
+    //std::cout << "Te_in_cell.size() = " << Te_in_cell.size()  << std::endl;
+    //for (size_t i = 0; i < Te_in_cell.size(); ++i) {
+    //std::cout << "Te_in_cell = " << Te_in_cell[i] << std::endl;
+    //std::cout << "Tcublet_idx = " << Tcublet_idx[i] << std::endl;
+    //std::cout << "Tcells_in_cublet = " << Tcells_in_cublet[i] << std::endl;
+    //std::cout << "TeventID = " << TeventID[i] << std::endl;
+    //}
+  
 
+    outputTree->Fill();
     ievent++;
-  } while (data);
-
+    Te_in_cell.clear();
+    Tcublet_idx.clear();    
+    Tcells_in_cublet.clear();                                                                                                               
+    TeventID.clear(); 
+  } while (data && ievent < max_event);
+  //delete event;
+  
   // Stop measuring time
   auto end_time = std::chrono::high_resolution_clock::now();
   auto duration = std::chrono::duration_cast<std::chrono::minutes>(end_time - start_time);
@@ -98,31 +120,50 @@ void processRootFile(const char* filename, TTree* outputTree) {
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void fill_n_tuple(std::vector<int>& eventID, std::vector<int>& cell_idx, std::vector<int>& cells_in_cublet, 
-		  std::vector<int>& cublet_idx, std::vector<double>& e_in_cell, std::vector<double> Te_in_cell, TTree* outputTree){
+		  std::vector<int>& cublet_idx, std::vector<double>& e_in_cell, std::vector<double>& Te_in_cell,
+		  std::vector<int>& Tcublet_idx, std::vector<int>& Tcells_in_cublet, std::vector<int>& TeventID, 
+		  TTree* outputTree){
   // Clear vectors before filling with new data
   cublet_idx.clear(); 
   cells_in_cublet.clear();
+  Tcublet_idx.clear();
+  Tcells_in_cublet.clear();
+  TeventID.clear();
+  Te_in_cell.clear();
+
+  int iteration = cell_idx.size();
   
   // Convert cell to cublet
-  for (int i = 0; i < cell_idx.size(); i++) {
+  for (int i = 0; i < iteration; i++) {
     cublet_info(cell_idx[i], cublet_idx, cells_in_cublet);
   }
-
+  
   // Collapse summing energy
-  double E = 0;
-  for (int i = 0;  i < cublet_idx.size(); i++) {
+  for (int i = 0;  i < iteration; i++) {
     int this_cublet_pos = cublet_idx.at(i);
-    int this_cell_pos    = cells_in_cublet.at(i);
-    for (int icx = 0; icx < 10; icx++) {
-      for (int icc = 0; icc < 10; icc++) {
-	if (icx == this_cublet_pos && icc == this_cell_pos) {
-	  E += e_in_cell.at(i);
-	  Te_in_cell.push_back(E);
-	  std::cout << "Total energy: " << E << std::endl;
-	}
-      }
-    }
-  }
+    int this_cell_pos   = cells_in_cublet.at(i);   
+  
+    Tcublet_idx.push_back(this_cublet_pos);
+    Tcells_in_cublet.push_back(this_cell_pos);
+    TeventID.push_back(eventID.at(i));
+    double E = e_in_cell.at(i);
+    
+    for (int j = i + 1; j < iteration; j++){
+      if (cublet_idx.at(j) == this_cublet_pos && cells_in_cublet.at(j) == this_cell_pos){
+	E += e_in_cell.at(j);
+      }// end if
+    }// end for j loop
+    Te_in_cell.push_back(E);
+  } // end for i loop 
+
+  //cout << "DEBUG: eventID.size() = " << eventID.size() << endl;
+  //cout << "DEBUG: cell_idx.size() = " << cell_idx.size() << endl;
+  //cout << "DEBUG: e_in_cell.size() = " << e_in_cell.size() << endl;
+  //cout << "DEBUG: cublet_idx.size() = " << cublet_idx.size() << endl;
+  //cout << "DEBUG: cells_in_cublet.size() = " << cells_in_cublet.size() << endl;
+  //cout << "DEBUG: Te_in_cell.size() = " << Te_in_cell.size() << endl;
+  //cout << "DEBUG: TeventID = " << TeventID.size() << endl;
+
 }
 
 
@@ -173,7 +214,7 @@ int main(int argc, char* argv[]) {
 	    
           // Process the root file
           processRootFile(filePath.c_str(), outputTree);
-
+	  
           // Print the output file path before processing                                                                                                                                                  
 	  std::cout << "Processing file: " << outputFilePath << std::endl;
 
