@@ -1,6 +1,6 @@
 # Description
 ## Code for reformatting large Ntuple (.root CERN) file that contain the hadronic calorimeter simulation. 
-
+### Progress
 - [x]  Read the data format.
 - [x]  Compute cells → cublets.
 - [x]  Loop on 1000 cublets → save the data.
@@ -8,7 +8,7 @@
         - [ ]  Compute the number of sensors.
             - [ ]  Loop on 100 sensors → compute the number of sensors, time.
 
-## Instructions to build and run project:
+### Instructions to build and run project:
 0. Create a directory for the project, e.g. /lustre/cmswork/xnguyen/  
 1. Copy this file to that directory.
 2. Create subdirectories:
