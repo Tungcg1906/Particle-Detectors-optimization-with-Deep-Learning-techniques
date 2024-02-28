@@ -72,7 +72,7 @@ part_info::part_info(TTree *tree) : fChain(0)
    Init(tree);
 }
 
-part_info::/lustre/cmswork/awais/part_info()
+part_info::~part_info()
 {
    if (!fChain) return;
    delete fChain->GetCurrentFile();
@@ -150,4 +150,4 @@ Int_t part_info::Cut(Long64_t entry)
 // returns -1 otherwise.
    return 1;
 }
-#endif // #ifdef /lustre/cmswork/awais/part_info_cxx
+#endif // #ifdef /lustre/cmswork/xnguyen/part_info_cxx
