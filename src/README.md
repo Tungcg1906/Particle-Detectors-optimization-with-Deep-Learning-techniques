@@ -1,5 +1,4 @@
-# Code for reformat Ntuple root file
-Reformatting Ntuples dataset (.root CERN):
+# Code for reformatting large Ntuple (.root CERN) file that contain the hadronic calorimeter simulation. 
 
 - [x]  Read the data format.
 - [x]  Compute cells → cublets.
