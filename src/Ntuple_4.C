@@ -27,11 +27,11 @@ static int max_event = 1;
 void processRootFile(const char* filename, TTree* outputTree);
 void fill_n_tuple(std::vector<int>& eventID, std::vector<int>& cell_idx, std::vector<int>& cells_in_cublet, 
 		  std::vector<int>& cublet_idx, std::vector<double>& e_in_cell, std::vector<double>& Te_in_cell,
-		  std::vector<int>& Tn_in_cell,
-		  std::vector<int>& Tcublet_idx, std::vector<int>& Tcells_in_cuble, std::vector<int>& TeventID,
+		  std::vector<int>& Tn_in_cell, std::vector<int>& Tcublet_idx, std::vector<int>& Tcells_in_cuble, std::vector<int>& TeventID,
+		  std::vector<int>& picell, std::vector<int>& pipdg, std::vector<double>& pimom, std::vector<int>& picublet_idx, std::vector<int>& picells_in_cublet,
 		  TTree* outputTree);
 void cublet_info(int cell_idx, std::vector<int>& cublet_idx, std::vector<int>& cells_in_cublet);
-
+void cublet_part_info(int picell, std::vector<int>& picublet_id, std::vector<int>& picell_id);
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 void processRootFile(const char* filename, TTree* outputTree) {
@@ -54,6 +54,8 @@ void processRootFile(const char* filename, TTree* outputTree) {
   // Created vectors
   std::vector<int> cublet_idx;
   std::vector<int> cells_in_cublet;
+  std::vector<int> picublet_idx;
+  std::vector<int> picells_in_cublet;
 
   // Compressed vectors
   std::vector<double> Te_in_cell;
@@ -65,10 +67,11 @@ void processRootFile(const char* filename, TTree* outputTree) {
 
   // Get the tree "Edep" and set branch addresses     
   TFile* inputFile = TFile::Open(filename);  
+
   TTree* edepTree = dynamic_cast<TTree*>(inputFile->Get("Edep"));
   TTree* partInfoTree = dynamic_cast<TTree*>(inputFile->Get("part_info"));
   Edep*  event = new Edep(edepTree);
-  PInfo* pievent = new Pinfo(partInfoTree);
+  part_info* pievent = new part_info(partInfoTree);
   int entries = edepTree->GetEntries();
   int pientries = partInfoTree->GetEntries();
 
@@ -79,6 +82,7 @@ void processRootFile(const char* filename, TTree* outputTree) {
   outputTree->Branch("Tedep", &Te_in_cell);
   
   int ievent = 0;
+  int epsilon = 1;
   bool data = false;
   do {
     data = false;
@@ -118,7 +122,8 @@ void processRootFile(const char* filename, TTree* outputTree) {
     
     // Fill the new Ntuples
     fill_n_tuple (eventID, cell_idx, cells_in_cublet, cublet_idx, e_in_cell, Te_in_cell, 
-		  Tn_in_cell, Tcublet_idx, Tcells_in_cublet, TeventID, pdg_id, picell, outputTree);
+		  Tn_in_cell, Tcublet_idx, Tcells_in_cublet, TeventID, 
+		  picell, pipdg, pimom, picublet_idx, picells_in_cublet, outputTree);
     
     outputTree->Fill();
     ievent++;
@@ -134,8 +139,8 @@ void processRootFile(const char* filename, TTree* outputTree) {
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void fill_n_tuple(std::vector<int>& eventID, std::vector<int>& cell_idx, std::vector<int>& cells_in_cublet, 
 		  std::vector<int>& cublet_idx, std::vector<double>& e_in_cell, std::vector<double>& Te_in_cell,
-		  std::vector<int>& Tn_in_cell,
-		  std::vector<int>& Tcublet_idx, std::vector<int>& Tcells_in_cublet, std::vector<int>& TeventID, 
+		  std::vector<int>& Tn_in_cell, std::vector<int>& Tcublet_idx, std::vector<int>& Tcells_in_cublet, std::vector<int>& TeventID, 
+		  std::vector<int>& picell, std::vector<int>& pipdg, std::vector<double>& pimom, std::vector<int>& picublet_idx, std::vector<int>& picells_in_cublet, 
 		  TTree* outputTree){
   // Clear vectors before filling with new data
   cublet_idx.clear(); 
@@ -145,24 +150,25 @@ void fill_n_tuple(std::vector<int>& eventID, std::vector<int>& cell_idx, std::ve
   TeventID.clear();
   Te_in_cell.clear();
   Tn_in_cell.clear();
-  Tpdg_id.clear();
+  //Tpdg_id.clear();
   // Convert cell to cublet
   for (int i = 0; i < cell_idx.size(); i++) {
     cublet_info(cell_idx[i], cublet_idx, cells_in_cublet);
   }
 
   // Fetch cublet and cell id for each of particles
-  for (int i=0; i < picell.size(); i++) {
-
-    // Make some logic here ... 
-  }
+  for (int i = 0; i < picell.size(); i++) {    
+    int pdg = pipdg[i];
+    cublet_part_info(picell[i], picublet_idx, picells_in_cublet);
+    
+  }//end for i loop
   
   // Collapse summing energy
   std::vector<bool> done;
   for (int i=0; i < cublet_idx.size(); i++) {
     done.push_back(false);
   }
-  for (int i = 0;  i < cublet_idx.size()-1; i++) {  
+  for (int i = 0;  i < cublet_idx.size() - 1; i++) {  
     if (!done[i]) {
       double E = e_in_cell.at(i);
       int ne = 1;
@@ -181,7 +187,7 @@ void fill_n_tuple(std::vector<int>& eventID, std::vector<int>& cell_idx, std::ve
       double maxmom = 0;
       int kmax = -1;
       for (int k = 0; k < picell.size(); k++) {
-	if (cublet_idx.at(i) == picublet_idx.at(k) && cells_in_cublet.at(i) == picell_in_cublet.at(k)) {
+	if (cublet_idx.at(i) == picublet_idx.at(k) && cells_in_cublet.at(i) == picells_in_cublet.at(k)) {
 	  if (maxmom < pimom.at(k)) {
 	    maxmom = pimom.at(k);
 	    kmax = k;
@@ -227,13 +233,20 @@ void cublet_info(int cell_idx, std::vector<int>& cublet_idx, std::vector<int>& c
 }// end function
 
 
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-void assign_id_part(){
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////   
+void cublet_part_info(int picell, std::vector<int>& picublet_idx, std::vector<int>& picells_in_cublet){
+  // Calculate cublet_idx                                                                                                                                                                                  
+  int z_idx = picell / 10000;
+  int y_idx = (picell - z_idx * 10000) / 100;
+  int x_idx = picell - z_idx * 10000 - y_idx * 100;
+  int picublet_id_info = x_idx / 10 + (y_idx / 10) * 10 + (z_idx / 10) * 100;
+  int picells_id_info = x_idx - (x_idx / 10) * 10 + (y_idx - (y_idx / 10) * 10) * 10 + (z_idx - (z_idx / 10) * 10) * 100;
 
-
-
-
-}
+  // Store the vectors
+  picublet_idx.push_back(picublet_id_info);
+  picells_in_cublet.push_back(picells_id_info);
+  return;
+}// end of function
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
