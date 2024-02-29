@@ -9,6 +9,7 @@
             - [ ]  Loop on 100 sensors → compute the number of sensors, time.
 
 ### Dataset structure
+ ![Diagram](images/data-struct.png)
 Each file contains two trees:
 1. part_info: MC truth of particle hits:
    
