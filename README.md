@@ -1,5 +1,9 @@
 # Particle Detectors optimization with Deep Learning techniques
 
+AUC vs width             |  Hadronic calorimeter
+:-------------------------:|:-------------------------:
+![](https://github.com/Tungcg1906/Particle-Detectors-optimization-with-Deep-Learning-techniques/blob/main/images/AUC-width.png)  |  ![](https://github.com/Tungcg1906/Particle-Detectors-optimization-with-Deep-Learning-techniques/blob/main/images/CMS-Detector.gif)
+
 ## Phase 1 
 
 We want to answer a very basic question: can we distinguish those 4 particle species based on the pattern of energy release in an arbitrarily granular device? And if so, how does the size of the cells affect this capability?
