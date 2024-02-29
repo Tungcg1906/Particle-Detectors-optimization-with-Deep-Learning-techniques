@@ -10,9 +10,12 @@
 
 ### Dataset structure
 
+- Each folder contains 100 .root files with 1000 events each, labeled with a file number (i.e. proton_i.root with i=1,…,100).
+- Each file contains two trees:
+  
  ![Data](https://github.com/Tungcg1906/Particle-Detectors-optimization-with-Deep-Learning-techniques/blob/main/images/data-struct.png)
  
-Each file contains two trees:
+
 
 | **part_info (MC truth of particle hits)**  | **E_dep (the energy stored by the hit in each cell)** |
 | ------------- | ------------- |
