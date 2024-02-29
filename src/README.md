@@ -14,7 +14,7 @@
  
 Each file contains two trees:
 
-| part_info (MC truth of particle hits)  | E_dep (the energy stored by the hit in each cell) |
+| **part_info (MC truth of particle hits)**  | **E_dep (the energy stored by the hit in each cell)** |
 | ------------- | ------------- |
 | Cut: particle momentum >2MeV  | Cut: energy deposit > 1keV  |
 | event_id: int to label all hits belonging to the same event  | event_id: same as before, int ID to filter single events  |
