@@ -1,6 +1,6 @@
 # Particle Detectors optimization with Deep Learning techniques
 
-AUC vs width             |  Hadronic calorimeter
+AUC vs cell's size             |  Hadronic calorimeter
 :-------------------------:|:-------------------------:
 ![](https://github.com/Tungcg1906/Particle-Detectors-optimization-with-Deep-Learning-techniques/blob/main/images/AUC-width.png)  |  ![](https://github.com/Tungcg1906/Particle-Detectors-optimization-with-Deep-Learning-techniques/blob/main/images/CMS-Detector.gif)
 
