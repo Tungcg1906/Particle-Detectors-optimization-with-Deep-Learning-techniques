@@ -18,11 +18,11 @@ Each file contains two trees:
 | ------------- | ------------- |
 | Cut: particle momentum >2MeV  | Cut: energy deposit > 1keV  |
 | event_id: int to label all hits belonging to the same event  | event_id: same as before, int ID to filter single events  |
-| pdg_id: PDG encoder for particle species  |  |
-| Track_id: int label for the track the hit belongs to  | |
-| parent_id: int label for reconstructing where hit was originated from  |   |
+| pdg_id: PDG encoder for particle species  | #N/A |
+| Track_id: int label for the track the hit belongs to  | #N/A |
+| parent_id: int label for reconstructing where hit was originated from  | #N/A |
 | pos_x,pos_y,pos_z: hit position  | Cell_no: int ID corresponding to which cell is collecting the deposit  |
-| Mom: particle momentum  |   |
+| Mom: particle momentum  | #N/A |
 | edepo: energy deposited in the hit  | edep: energy deposited in cell  |
 
 
