@@ -1,5 +1,5 @@
 # Description
-## Code for reformatting large Ntuple (.root CERN) file that contain the hadronic calorimeter simulation. 
+## Code for reformatting large Ntuple (.root CERN) file that contain the Hadronic calorimeter simulation. 
 ### Progress
 - [x]  Read the data format.
 - [x]  Compute cells → cublets.
