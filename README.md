@@ -1,5 +1,5 @@
 # Particle Detectors optimization with Deep Learning techniques
-The research is divided into 2 phases:
+
 ## Phase 1 
 
 We want to answer a very basic question: can we distinguish those 4 particle species based on the pattern of energy release in an arbitrarily granular device? And if so, how does the size of the cells affect this capability?
