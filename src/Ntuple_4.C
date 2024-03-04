@@ -134,11 +134,7 @@ void processRootFile(const char* filename, TTree* outputTree) {
 		  Tn_in_cell, Tcublet_idx, Tcells_in_cublet, TeventID, 
 		  picell, pipdg, pimom, picublet_idx, picells_in_cublet, Tpdg_id, Tmom, outputTree);
 
-    // Before accessing elements in vectors, add checks to ensure indices are valid
-    for (size_t i = 0; i < picell.size(); i++) {
-	std::cout << "PDG ID = " << Tpdg_id[i] << std::endl;
-	std::cout << "Total momentum = " << Tmom[i] << std::endl;
-      }
+    std::cout << "Tpdg_id = " << Tpdg_id.back() << " , Tmom = " << Tmom.back() << std::endl;
     
     outputTree->Fill();
     ievent++;
@@ -210,11 +206,11 @@ void fill_n_tuple(std::vector<int>& eventID, std::vector<int>& cell_idx, std::ve
 	    kmax = k;
 	  }// end if maxmom < pimom
 	}// end if i == k
-	if (kmax != -1){
-	  Tpdg_id.push_back(pipdg.at(kmax));
-	  Tmom.push_back(maxmom);
-	}
       }// end for k loop
+      if (kmax != -1){
+	Tpdg_id.push_back(pipdg.at(kmax));
+	Tmom.push_back(maxmom);
+      }
  
       // Store the vectors
       Tcublet_idx.push_back(cublet_idx.at(i));
