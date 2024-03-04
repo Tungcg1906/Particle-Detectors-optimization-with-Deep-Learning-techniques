@@ -212,7 +212,7 @@ void fill_n_tuple(std::vector<int>& eventID, std::vector<int>& cell_idx, std::ve
 	}// end if i == k
 	if (kmax != -1){
 	  Tpdg_id.push_back(pipdg.at(kmax));
-	  Tmom.push_back(pimom.at(kmax));
+	  Tmom.push_back(maxmom);
 	}
       }// end for k loop
  
