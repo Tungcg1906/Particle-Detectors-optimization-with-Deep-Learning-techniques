@@ -25,7 +25,7 @@
 
 using namespace std;
 
-static int max_event = 1;
+static int max_event = 10;
 
 // Declare function
 void processRootFile(const char* filename, TTree* outputTree);
@@ -33,7 +33,7 @@ void fill_n_tuple(std::vector<int>& eventID, std::vector<int>& cell_idx, std::ve
 		  std::vector<int>& cublet_idx, std::vector<double>& e_in_cell, std::vector<double>& Te_in_cell,
 		  std::vector<int>& Tn_in_cell, std::vector<int>& Tcublet_idx, std::vector<int>& Tcells_in_cuble, std::vector<int>& TeventID,
 		  std::vector<int>& picell, std::vector<int>& pipdg, std::vector<double>& pimom, std::vector<int>& picublet_idx, std::vector<int>& picells_in_cublet,
-		  std::vector<int>& Tpdg_id, std::vector<int>& Tmom,
+		  std::vector<int>& Tpdg_id, std::vector<int>& Tmom, std::vector<int>& Tphoton,
 		  TTree* outputTree);
 void cublet_info(int cell_idx, std::vector<int>& cublet_idx, std::vector<int>& cells_in_cublet);
 void cublet_part_info(int picell, std::vector<int>& picublet_id, std::vector<int>& picell_id);
@@ -70,6 +70,7 @@ void processRootFile(const char* filename, TTree* outputTree) {
   std::vector<int> Tn_in_cell;
   std::vector<int> Tpdg_id;
   std::vector<int> Tmom;
+  std::vector<int> Tphoton;
 
   // Get the tree "Edep" and set branch addresses     
   TFile* inputFile = TFile::Open(filename);  
@@ -88,6 +89,7 @@ void processRootFile(const char* filename, TTree* outputTree) {
   outputTree->Branch("Tedep", &Te_in_cell);
   outputTree->Branch("Tpdg_id", &Tpdg_id);
   outputTree->Branch("Tmom", &Tmom);
+  outputTree->Branch("Tphoton", &Tphoton);
   
   int ievent = 0;
   int epsilon = 1;
@@ -132,10 +134,13 @@ void processRootFile(const char* filename, TTree* outputTree) {
     // Fill the new Ntuples
     fill_n_tuple (eventID, cell_idx, cells_in_cublet, cublet_idx, e_in_cell, Te_in_cell, 
 		  Tn_in_cell, Tcublet_idx, Tcells_in_cublet, TeventID, 
-		  picell, pipdg, pimom, picublet_idx, picells_in_cublet, Tpdg_id, Tmom, outputTree);
-
-    std::cout << "Tpdg_id = " << Tpdg_id.back() << " , Tmom = " << Tmom.back() << std::endl;
+		  picell, pipdg, pimom, picublet_idx, picells_in_cublet, Tpdg_id, Tmom, Tphoton, outputTree);
     
+    for (size_t i = 0; i < Tpdg_id.size(); ++i) {
+      std::cout << "Tpdg_id : " << Tpdg_id[i]
+		<< " , Tmom : " << Tmom[i] << " , Tphoton: " << Tphoton[i] << std::endl;
+    }
+
     outputTree->Fill();
     ievent++;
   } while (data && ievent < max_event);
@@ -152,7 +157,7 @@ void fill_n_tuple(std::vector<int>& eventID, std::vector<int>& cell_idx, std::ve
 		  std::vector<int>& cublet_idx, std::vector<double>& e_in_cell, std::vector<double>& Te_in_cell,
 		  std::vector<int>& Tn_in_cell, std::vector<int>& Tcublet_idx, std::vector<int>& Tcells_in_cublet, std::vector<int>& TeventID, 
 		  std::vector<int>& picell, std::vector<int>& pipdg, std::vector<double>& pimom, std::vector<int>& picublet_idx, std::vector<int>& picells_in_cublet, 
-		  std::vector<int>& Tpdg_id, std::vector<int>& Tmom,
+		  std::vector<int>& Tpdg_id, std::vector<int>& Tmom, std::vector<int>& Tphoton,
 		  TTree* outputTree){
   // Clear vectors before filling with new data
   cublet_idx.clear(); 
@@ -166,6 +171,8 @@ void fill_n_tuple(std::vector<int>& eventID, std::vector<int>& cell_idx, std::ve
   Tn_in_cell.clear();
   Tpdg_id.clear();
   Tmom.clear();
+  Tphoton.clear();
+
   // Convert cell to cublet
   for (int i = 0; i < cell_idx.size(); i++) {
     cublet_info(cell_idx[i], cublet_idx, cells_in_cublet);
@@ -173,7 +180,7 @@ void fill_n_tuple(std::vector<int>& eventID, std::vector<int>& cell_idx, std::ve
 
   // Fetch cublet and cell id for each of particles
   for (int i = 0; i < picell.size(); i++) {    
-    cublet_part_info(picell[i], picublet_idx, picells_in_cublet);    
+    cublet_part_info(picell[i], picublet_idx, picells_in_cublet);
   }//end for i loop
   
   // Collapse summing energy
@@ -198,9 +205,14 @@ void fill_n_tuple(std::vector<int>& eventID, std::vector<int>& cell_idx, std::ve
 
       int kmax = -1;
       double maxmom = 0;
+      int photonNo = 0;
       // Fetch pdg id of highest momentum p; article with same cell location, from part_info block 
       for (int k = 0; k < picublet_idx.size(); k++) {
 	if (cublet_idx.at(i) == picublet_idx.at(k) && cells_in_cublet.at(i) == picells_in_cublet.at(k)) {
+	  if (pipdg.at(k) == 22){
+            photonNo++;
+          }// end if pdg == 22  
+
 	  if (maxmom < pimom.at(k)) {
 	    maxmom = pimom.at(k);
 	    kmax = k;
@@ -211,13 +223,14 @@ void fill_n_tuple(std::vector<int>& eventID, std::vector<int>& cell_idx, std::ve
 	Tpdg_id.push_back(pipdg.at(kmax));
 	Tmom.push_back(maxmom);
       }
- 
       // Store the vectors
       Tcublet_idx.push_back(cublet_idx.at(i));
       Tcells_in_cublet.push_back(cells_in_cublet.at(i));
       TeventID.push_back(eventID.at(i));
       Te_in_cell.push_back(E);
       Tn_in_cell.push_back(ne);
+      Tphoton.push_back(photonNo);
+      
     } // end if i is !done
   } // end for i loop 
   return;
@@ -270,7 +283,8 @@ void cublet_part_info(int picell, std::vector<int>& picublet_idx, std::vector<in
 int main(int argc, char* argv[]) {
   const char* inputFolder = "/lustre/cmswork/xnguyen/data/";
   const char* outputFolder = "/lustre/cmswork/xnguyen/data/cublet_";
-  const char* folders[] = {"kaon", "neutron", "pion", "proton"};
+  //const char* folders[] = {"kaon", "neutron", "pion", "proton"};
+  const char* folders[] = {"kaon"};
 
   for (const char* folder : folders) {
     std::string folderPath = std::string(inputFolder) + folder + "/";
