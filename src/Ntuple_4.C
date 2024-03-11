@@ -224,15 +224,14 @@ void fill_n_tuple(std::vector<int>& eventID, std::vector<int>& cell_idx, std::ve
       if (kmax != -1){
 	Tpdg_id.push_back(pipdg.at(kmax));
 	Tmom.push_back(maxmom);
-      }
-      // Store the vectors
+
       Tcublet_idx.push_back(cublet_idx.at(i));
       Tcells_in_cublet.push_back(cells_in_cublet.at(i));
       TeventID.push_back(eventID.at(i));
       Te_in_cell.push_back(E);
       Tn_in_cell.push_back(ne);
       Tphoton.push_back(photonNo);
-      
+              }// Store the vectors
     } // end if i is !done
   } // end for i loop 
   return;
