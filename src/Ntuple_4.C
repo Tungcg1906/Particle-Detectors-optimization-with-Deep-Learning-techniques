@@ -1,7 +1,9 @@
 /////////////////////////////////////////////////////////////////
 // Program reformatting large Ntuple .root file
 // Forth edition
-//
+// Vectors are declared inside function
+// Example: kaon_3.root
+// for 5 events -> 1296 secs to finish
 /////////////////////////////////////////////////////////////////
 #include <iostream>
 #include <chrono>

@@ -1,7 +1,9 @@
 /////////////////////////////////////////////////////////////////
 // Program reformatting large Ntuple .root file
 // Fifth edition
-//
+// Vectors are declared globally
+// Example: kaon_3.root
+// for 5 events -> 1365 secs to finish
 /////////////////////////////////////////////////////////////////
 #include <iostream>
 #include <chrono>
