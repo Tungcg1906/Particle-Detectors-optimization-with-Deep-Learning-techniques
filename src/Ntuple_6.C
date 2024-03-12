@@ -29,34 +29,33 @@ using namespace std;
 
 static int max_event = 5;
 
-const int MAX_SIZE = 1000000; 
-
 // Arrays for Edep
-double e_in_cell[MAX_SIZE];
-int cell_idx[MAX_SIZE];
-int eventID[MAX_SIZE];
+double* e_in_cell = nullptr;
+int* cell_idx = nullptr;
+int* eventID = nullptr;
 
 // Arrays for part_info
-int pipdg[MAX_SIZE];
-int picell[MAX_SIZE];
-double pimom[MAX_SIZE];
+int* pipdg = nullptr;
+int* picell = nullptr;
+double* pimom = nullptr;
 
 // Arrays for created vectors
-int cublet_idx[MAX_SIZE];
-int cells_in_cublet[MAX_SIZE];
-int picublet_idx[MAX_SIZE];
-int picells_in_cublet[MAX_SIZE];
+int* cublet_idx = nullptr;
+int* cells_in_cublet = nullptr;
+int* picublet_idx = nullptr;
+int* picells_in_cublet = nullptr;
 
 // Arrays for compressed vectors
-double Te_in_cell[MAX_SIZE];
-int Tcublet_idx[MAX_SIZE];
-int Tcells_in_cublet[MAX_SIZE];
-int TeventID[MAX_SIZE];
-int Tn_in_cell[MAX_SIZE];
-int Tpdg_id[MAX_SIZE];
-double Tmom[MAX_SIZE];
-int Tphoton[MAX_SIZE];
+double* Te_in_cell = nullptr;
+int* Tcublet_idx = nullptr;
+int* Tcells_in_cublet = nullptr;
+int* TeventID = nullptr;
+int* Tn_in_cell = nullptr;
+int* Tpdg_id = nullptr;
+double* Tmom = nullptr;
+int* Tphoton = nullptr; 
 
+const int MAX_SIZE = 5000000;
 
 // Declare function
 void processRootFile(const char* filename, TTree* outputTree);
@@ -71,6 +70,29 @@ void processRootFile(const char* filename, TTree* outputTree) {
   auto start_time = std::chrono::high_resolution_clock::now();
   std::cout << "Processing file: " << filename << std::endl;
 
+  // Allocate memory for the arrays
+  e_in_cell = new double[MAX_SIZE];
+  cell_idx = new int[MAX_SIZE];
+  eventID = new int[MAX_SIZE];
+    
+  pipdg = new int[MAX_SIZE];
+  picell = new int[MAX_SIZE];
+  pimom = new double[MAX_SIZE];
+    
+  cublet_idx = new int[MAX_SIZE];
+  cells_in_cublet = new int[MAX_SIZE];
+  picublet_idx = new int[MAX_SIZE];
+  picells_in_cublet = new int[MAX_SIZE];
+    
+  Te_in_cell = new double[MAX_SIZE];
+  Tcublet_idx = new int[MAX_SIZE];
+  Tcells_in_cublet = new int[MAX_SIZE];
+  TeventID = new int[MAX_SIZE];
+  Tn_in_cell = new int[MAX_SIZE];
+  Tpdg_id = new int[MAX_SIZE];
+  Tmom = new double[MAX_SIZE];
+  Tphoton = new int[MAX_SIZE];
+
   // Get the tree "Edep" and set branch addresses     
   TFile* inputFile = TFile::Open(filename);  
 
@@ -82,13 +104,13 @@ void processRootFile(const char* filename, TTree* outputTree) {
   int pientries = partInfoTree->GetEntries();
 
   // Set branches for output tree
-  outputTree->Branch("Tcublet_idx", &Tcublet_idx, "Tcublet_idx[MAX_SIZE]/I");
-  outputTree->Branch("Tcells_in_cublet", &Tcells_in_cublet, "Tcells_in_cublet[MAX_SIZE]/I");
-  outputTree->Branch("Tevent_id", &TeventID, "Tevent_id[MAX_SIZE]/I");
-  outputTree->Branch("Tedep", &Te_in_cell, "Tedep[MAX_SIZE]/D");
-  outputTree->Branch("Tpdg_id", &Tpdg_id, "Tpdg_id[MAX_SIZE]/I");
-  outputTree->Branch("Tmom", &Tmom, "Tmom[MAX_SIZE]/D");
-  outputTree->Branch("Tphoton", &Tphoton, "Tphoton[MAX_SIZE]/I");
+  outputTree->Branch("Tcublet_idx", Tcublet_idx, "Tcublet_idx[100000]/I");
+  outputTree->Branch("Tcells_in_cublet", Tcells_in_cublet, "Tcells_in_cublet[100000]/I");
+  outputTree->Branch("Tevent_id", TeventID, "Tevent_id[100000]/I");
+  outputTree->Branch("Tedep", Te_in_cell, "Tedep[100000]/D");
+  outputTree->Branch("Tpdg_id", Tpdg_id, "Tpdg_id[100000]/I");
+  outputTree->Branch("Tmom", Tmom, "Tmom[100000]/D");
+  outputTree->Branch("Tphoton", Tphoton, "Tphoton[100000]/I");
   
   int ievent = 0;
   int epsilon = 1;
@@ -136,13 +158,7 @@ void processRootFile(const char* filename, TTree* outputTree) {
     } // end of for loop on all data file information
     
     // Fill the new Ntuples
-    fill_n_tuple (outputTree);
-    
-    for (size_t i = 0; i < MAX_SIZE; ++i) {
-      std::cout << "Tpdg_id : " << Tpdg_id[i]
-		<< " , Tmom : " << Tmom[i] << " , Tphoton: " << Tphoton[i] << std::endl;
-    }
-   
+    fill_n_tuple (outputTree);   
     outputTree->Fill();
     ievent++;
   } while (data && ievent < max_event);
@@ -161,10 +177,10 @@ void fill_n_tuple(TTree* outputTree){
   delete[] cells_in_cublet;
   delete[] picublet_idx;
   delete[] picells_in_cublet;
+  delete[] Te_in_cell;
   delete[] Tcublet_idx;
   delete[] Tcells_in_cublet;
   delete[] TeventID;
-  delete[] Te_in_cell;
   delete[] Tn_in_cell;
   delete[] Tpdg_id;
   delete[] Tmom;
