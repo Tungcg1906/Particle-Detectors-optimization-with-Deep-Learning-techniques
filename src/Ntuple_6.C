@@ -27,7 +27,7 @@
 
 using namespace std;
 
-static int max_event = 5;
+static int max_event = 1;
 
 // Arrays for Edep
 double* e_in_cell = nullptr;
@@ -119,12 +119,12 @@ void processRootFile(const char* filename, TTree* outputTree) {
     data = false;
     
     // Clear the arrays
-    delete[] e_in_cell;
-    delete[] cell_idx;
-    delete[] eventID;
-    delete[] pipdg;
-    delete[] picell;
-    delete[] pimom;
+    //delete[] e_in_cell;
+    //delete[] cell_idx;
+    //delete[] eventID;
+    //delete[] pipdg;
+    //delete[] picell;
+    //delete[] pimom;
 
     int currentIndex = 0; // Track the current index
     for (int j = 0; j < entries; j++) {
@@ -158,7 +158,12 @@ void processRootFile(const char* filename, TTree* outputTree) {
     } // end of for loop on all data file information
     
     // Fill the new Ntuples
-    fill_n_tuple (outputTree);   
+    fill_n_tuple (outputTree);
+    for (size_t i = 0; i < MAX_SIZE; ++i) {
+      std::cout << "Tpdg_id : " << Tpdg_id[i]
+		<< " , Tmom : " << Tmom[i] << " , Tphoton: " << Tphoton[i] << std::endl;
+    }
+
     outputTree->Fill();
     ievent++;
   } while (data && ievent < max_event);
