@@ -28,7 +28,7 @@
 using namespace std;
 
 static int max_event = 100;
-double sum_energy[10000] = {0.};
+TH2F *histogram = new TH2F("histogram", "Scatter Plot", 100, 0, 100, 100, 0, 100);
 
 // Declare function
 void plotEnergy(const char* filename);
@@ -36,7 +36,6 @@ void plotEnergy(const char* filename);
 template <typename T>
 std::map<int, vector<UInt_t> > map_indices(T event, int entries);
 
-void scatterPlot(double *data, int dataSize);
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 void plotEnergy(const char* filename) {
  
@@ -70,17 +69,32 @@ void plotEnergy(const char* filename) {
 			
 			      event->GetEntry(k);
 
-            //sum energies depending on the cell idx.
+            //fill histogram with energies 
             //Note: it is necessary to define the index within the range [0,9999] (xy plane projection)		
-			      layer_cell_idx =  int(event->cell_no) % 9999;
-			      sum_energy[layer_cell_idx] += event->edep;
+			      layer_cell_idx =  int(event->cell_no) % 10000;
+            
+            int x = layer_cell_idx % 100; 
+            int y = int(99 - std::floor(layer_cell_idx/100.)); 
+            double E = (event->edep)/max_event; //average absorbed energy
+
+			      histogram->Fill(x, y, E);
         	}	  
     	} // end of for loop
 
 	    ievent++;
   	} while (ievent < max_event);
 
-    scatterPlot(sum_energy, 10000);
+    TCanvas *canvas = new TCanvas("canvas", "Scatter Plot", 800, 800);
+
+    histogram->Draw("COLZ");
+    histogram->SetMarkerStyle(21);
+    histogram->SetMarkerSize(2);
+    histogram->SetMarkerColor(kRed);
+    
+    canvas->SetLogz();
+    canvas->Update();
+    canvas->Draw();
+    canvas->SaveAs("Edep_energyDistribution.png");
 
   	// Stop measuring time
   	auto end_time = std::chrono::high_resolution_clock::now();
@@ -114,28 +128,6 @@ std::map<int, vector<UInt_t> > map_indices(T event, int entries) {
   map_idx[prev_id].push_back(entries-1);
   
   return(map_idx);
-}
-
-void scatterPlot(double *data, int dataSize) {
-
-    TCanvas *canvas = new TCanvas("canvas", "Scatter Plot", 800, 800);
-    TH2F *histogram = new TH2F("histogram", "Scatter Plot", 100, 0, 100, 100, 0, 100);
-
-    for (int i = 0; i < dataSize; ++i) {
-        int x = i % 99; 
-        int y = 99 - std::floor(i/99); 
-        int color = data[i]/max_event; //average absorbed energy
-
-        histogram->SetBinContent(x + 1, y + 1, color);
-    }
-
-    histogram->SetMarkerStyle(21);
-    histogram->SetMarkerSize(2);
-
-    histogram->Draw("COLZ");
-    canvas->SaveAs("Edep_energyDistribution.png");
-    std::cout << "Result of the analysis has been saved to Edep_energyDistribution.png" << std::endl;
-
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
