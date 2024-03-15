@@ -134,35 +134,23 @@ void scatterPlot(double *data, int dataSize) {
 
     histogram->Draw("COLZ");
     canvas->SaveAs("Edep_energyDistribution.png");
+    std::cout << "Result of the analysis has been saved to Edep_energyDistribution.png" << std::endl;
+
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 int main(int argc, char* argv[]) {
-  
-  const char* inputFolder = "/lustre/cmswork/adevita/data/";
-  const char* folders[] = {"kaon"};
-
-  for (const char* folder : folders) {
-    std::string folderPath = std::string(inputFolder) + folder + "/";
-    DIR* dir = opendir(folderPath.c_str());
-    
-    if (dir) {
-      struct dirent* entry;
-      while ((entry = readdir(dir)) != nullptr) {
-        if (entry->d_type == DT_REG && std::string(entry->d_name).find(".root") != std::string::npos) {
-	          
-            std::string filePath = folderPath + entry->d_name;
-	    
-            // Process the root file
-            plotEnergy(filePath.c_str());
-
-          // Print completion message
-	        std::cout << "File processing completed." << std::endl;
-        }
-      }
-      closedir(dir);
+    // Check if the file path is provided as a command-line argument
+    if (argc != 2) {
+        std::cerr << "Usage: " << argv[0] << " <filePath>" << std::endl;
+        return 1; // Return a non-zero error code
     }
-  }
 
-  return 0;
+    // Use the file path provided as a command-line argument
+    std::string filePath = argv[1];
+
+    // Call the plotEnergy function with the file path converted to const char*
+    plotEnergy(filePath.c_str());
+
+    return 0;
 }
