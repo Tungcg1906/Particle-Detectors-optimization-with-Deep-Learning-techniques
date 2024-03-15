@@ -1,6 +1,6 @@
 /////////////////////////////////////////////////////////////////
-// Program reformatting large Ntuple .root file
-// Fifth edition
+// Program plotting energy disribution of Edep tree
+// First edition
 //
 /////////////////////////////////////////////////////////////////
 #include <iostream>
@@ -20,6 +20,7 @@
 #include <TChain.h>
 #include <sys/types.h>
 #include <dirent.h>
+#include <cmath>
 
 #include "Edep.h"
 #include "part_info.h"
@@ -27,27 +28,17 @@
 using namespace std;
 
 static int max_event = 100;
-
-// Define vectors                                                                                                                                                                                         
-// Initial vectors from Edep                                                                                                                                                                              
-std::vector<double> e_in_cell;
-std::vector<int> cell_idx;
-std::vector<int> eventID;
-
-
-
 double sum_energy[10000] = {0.};
 
 // Declare function
-void processRootFile(const char* filename, TTree* outputTree);
-
-void summed_energy(std::vector<int> idx, std::vector<double> en);
+void plotEnergy(const char* filename);
 
 template <typename T>
 std::map<int, vector<UInt_t> > map_indices(T event, int entries);
 
+void scatterPlot(double *data, int dataSize);
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
-void processRootFile(const char* filename, TTree* outputTree) {
+void plotEnergy(const char* filename) {
  
 	// Start measuring time
   	auto start_time = std::chrono::high_resolution_clock::now();
@@ -66,45 +57,36 @@ void processRootFile(const char* filename, TTree* outputTree) {
   	int ievent = 0;
   	do {
     	 
-	// check if event index is present
+	    // check if event index is present
     	if (m_idx_edep.find(ievent) == m_idx_edep.end()) {
      		 continue;
     	}
-
-    	e_in_cell.clear();
-    	cell_idx.clear();
-    	eventID.clear();
 	
-	int layer_cell_idx = 0;
-    	for (int j = 0; j < m_idx_edep[ievent].size(); j+=2) {
-      		for (int k = m_idx_edep[ievent][j]; k < m_idx_edep[ievent][j+1]+1; k++) {
+	    int layer_cell_idx = 0;
+    	for (int j = 0; j < m_idx_edep[ievent].size(); j+=2) 
+      {
+      		for (int k = m_idx_edep[ievent][j]; k < m_idx_edep[ievent][j+1]+1; k++) 
+          {
 			
-			event->GetEntry(k);
-            		
-			layer_cell_idx =  int(event->cell_no) % 9999;
-			sum_energy[layer_cell_idx] += event->edep;
+			      event->GetEntry(k);
+
+            //sum energies depending on the cell idx.
+            //Note: it is necessary to define the index within the range [0,9999] (xy plane projection)		
+			      layer_cell_idx =  int(event->cell_no) % 9999;
+			      sum_energy[layer_cell_idx] += event->edep;
         	}	  
     	} // end of for loop
 
-	ievent++;
+	    ievent++;
   	} while (ievent < max_event);
- 	
+
+    scatterPlot(sum_energy, 10000);
+
   	// Stop measuring time
   	auto end_time = std::chrono::high_resolution_clock::now();
   	auto duration = std::chrono::duration_cast<std::chrono::seconds>(end_time - start_time);
   	std::cout << "Finished processing file. Time taken: " << duration.count() << " secs. " << std::endl;
 }// end function
-
-///////////
-void summed_energy(std::vector<int> idx, std::vector<double> en)
-{
-	int layer_cell_idx = 0;
-	for (int i = 0; i < idx.size(); i++)
-	{	
-		layer_cell_idx =  idx[i] % 9999;
-		sum_energy[layer_cell_idx] += en[i];		
-	}	
-}
 
 //////////////////
 template <typename T>
@@ -134,43 +116,48 @@ std::map<int, vector<UInt_t> > map_indices(T event, int entries) {
   return(map_idx);
 }
 
+void scatterPlot(double *data, int dataSize) {
 
+    TCanvas *canvas = new TCanvas("canvas", "Scatter Plot", 800, 800);
+    TH2F *histogram = new TH2F("histogram", "Scatter Plot", 100, 0, 100, 100, 0, 100);
+
+    for (int i = 0; i < dataSize; ++i) {
+        int x = i % 99; 
+        int y = 99 - std::floor(i/99); 
+        int color = data[i]/max_event; //average absorbed energy
+
+        histogram->SetBinContent(x + 1, y + 1, color);
+    }
+
+    histogram->SetMarkerStyle(21);
+    histogram->SetMarkerSize(2);
+
+    histogram->Draw("COLZ");
+    canvas->SaveAs("Edep_energyDistribution.png");
+}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 int main(int argc, char* argv[]) {
+  
   const char* inputFolder = "/lustre/cmswork/adevita/data/";
-  const char* outputFolder = "/lustre/cmswork/adevita/data/cublet_";
-  //const char* folders[] = {"kaon", "neutron", "pion", "proton"};
   const char* folders[] = {"kaon"};
 
   for (const char* folder : folders) {
     std::string folderPath = std::string(inputFolder) + folder + "/";
-    std::string outputFolderPath = std::string(outputFolder) + folder + "/";
     DIR* dir = opendir(folderPath.c_str());
+    
     if (dir) {
       struct dirent* entry;
       while ((entry = readdir(dir)) != nullptr) {
         if (entry->d_type == DT_REG && std::string(entry->d_name).find(".root") != std::string::npos) {
-	  std::string filePath = folderPath + entry->d_name;
-	  std::string outputFilePath = outputFolderPath + "cublet_" + std::string(entry->d_name);
-
-	  // Open the output file for writing
-          TFile outputFile(outputFilePath.c_str(), "RECREATE");
-          TTree* outputTree = new TTree("outputTree", "Output Tree Description");
+	          
+            std::string filePath = folderPath + entry->d_name;
 	    
-          // Process the root file
-          processRootFile(filePath.c_str(), outputTree);
-	  
-          // Print the output file path before processing                                                                                                                                                  
-	  std::cout << "Processing file: " << outputFilePath << std::endl;
-
-          // Close the output file and clean up memory
-          outputFile.Write();  // Write the TTree to the file
-          outputFile.Close();
-	  // delete outputTree;
+            // Process the root file
+            plotEnergy(filePath.c_str());
 
           // Print completion message
-	  std::cout << "File processing completed." << std::endl;
+	        std::cout << "File processing completed." << std::endl;
         }
       }
       closedir(dir);
