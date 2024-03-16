@@ -1,7 +1,8 @@
 /////////////////////////////////////////////////////////////////
 // Program validating the data after processed thru the code Ntuple
-// 
-//
+// Frist edition
+// Execute the code: root -l output_energyPlot.C
+// Run the code: ./output_energyPlot.C
 /////////////////////////////////////////////////////////////////
 #include <iostream>
 #include <chrono>

@@ -1,0 +1,6 @@
+{
+    "files.associations": {
+        "output_energyPlot.C": "cpp",
+        "Edep_energyPlot.C": "cpp"
+    }
+}
