@@ -49,7 +49,9 @@ void processRootFile(const char* filename, TTree* outputTree, TH2F* outputHist1,
       int z_idx = (*cell_idx)[j] / 10000;
       int y_idx = ((*cell_idx)[j] - z_idx * 10000) / 100;
       int x_idx = (*cell_idx)[j] - z_idx * 10000 - y_idx * 100; 
-      outputHist1->Fill(x_idx, y_idx, E_tot);
+      int cublet_x = x_idx / 10;
+      int cublet_y = y_idx / 10;
+      outputHist1->Fill(cublet_x, cublet_y, E_tot);
     }// end for loop j
     for (size_t k = 0; k < e_in_cell->size(); k++){
       double E = (*e_in_cell)[k]; // Access for energy
@@ -72,7 +74,7 @@ int test() {
   TCanvas* canvas = new TCanvas("canvas", "Histograms", 1000, 600);
 
   // Creating first histogram
-  TH2F *histogram1 = new TH2F("histogram1", "Total Energy Distribution", 100, 0, 100, 100, 0, 100);
+  TH2F *histogram1 = new TH2F("histogram1", "Total Energy Distribution", 10, 0, 10, 10, 0, 10);
   histogram1->GetXaxis()->SetTitle("X");
   histogram1->GetYaxis()->SetTitle("Y");
   histogram1->SetMarkerStyle(21);
