@@ -28,16 +28,18 @@
 using namespace std;
 
 static int max_event = 100;
-TH2F *histogram = new TH2F("histogram", "Scatter Plot", 100, 0, 100, 100, 0, 100);
+TH2F *histoCell = new TH2F("hist", "Scatter Plot", 100, 0, 100, 100, 0, 100);
+TH2F *histoCublet = new TH2F("histo", "Scatter Plot", 10, 0, 10, 10, 0, 10);
 
 // Declare function
-void plotEnergy(const char* filename);
+void plotEnergyCell(const char* filename);
+void plotEnergyCublet(const char* filename);
 
 template <typename T>
 std::map<int, vector<UInt_t> > map_indices(T event, int entries);
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
-void plotEnergy(const char* filename) {
+void plotEnergyCell(const char* filename) {
  
 	// Start measuring time
   	auto start_time = std::chrono::high_resolution_clock::now();
@@ -74,27 +76,100 @@ void plotEnergy(const char* filename) {
 			      layer_cell_idx =  int(event->cell_no) % 10000;
             
             int x = layer_cell_idx % 100; 
-            int y = int(99 - std::floor(layer_cell_idx/100.)); 
+            int y = layer_cell_idx/100.; 
             double E = (event->edep)/max_event; //average absorbed energy
 
-			      histogram->Fill(x, y, E);
+			      histoCell->Fill(x, y, E);
         	}	  
     	} // end of for loop
 
 	    ievent++;
   	} while (ievent < max_event);
 
-    TCanvas *canvas = new TCanvas("canvas", "Scatter Plot", 800, 800);
+    TCanvas *canvas = new TCanvas("canvas", "Scatter Plot", 800, 600);
 
-    histogram->Draw("COLZ");
-    histogram->SetMarkerStyle(21);
-    histogram->SetMarkerSize(2);
-    histogram->SetMarkerColor(kRed);
+    histoCell->Draw("COLZ");
+    histoCell->SetMarkerStyle(21);
+    histoCell->SetMarkerSize(2);
+    histoCell->SetMarkerColor(kRed);
     
     canvas->SetLogz();
     canvas->Update();
     canvas->Draw();
     canvas->SaveAs("Edep_energyDistribution.png");
+
+  	// Stop measuring time
+  	auto end_time = std::chrono::high_resolution_clock::now();
+  	auto duration = std::chrono::duration_cast<std::chrono::seconds>(end_time - start_time);
+  	std::cout << "Finished processing file. Time taken: " << duration.count() << " secs. " << std::endl;
+}// end function
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+void plotEnergyCublet(const char* filename) {
+ 
+	// Start measuring time
+  	auto start_time = std::chrono::high_resolution_clock::now();
+  	std::cout << "Processing file: " << filename << std::endl;
+	
+  	// Get the tree "Edep" and set branch addresses     
+  	TFile* inputFile = TFile::Open(filename);  
+
+  	TTree* edepTree = dynamic_cast<TTree*>(inputFile->Get("Edep"));
+  	Edep*  event = new Edep(edepTree);
+  	int entries = edepTree->GetEntries();
+
+  	std::map<int, std::vector<UInt_t> > m_idx_edep   = map_indices(event, entries);
+  	std::cout << "Edep index map complete" << std::endl;
+
+  	int ievent = 0;
+  	do {
+    	 
+	    // check if event index is present
+    	if (m_idx_edep.find(ievent) == m_idx_edep.end()) {
+     		 continue;
+    	}
+	
+	    int layer_cell_idx = 0;
+    	for (int j = 0; j < m_idx_edep[ievent].size(); j+=2) 
+      {
+      		for (int k = m_idx_edep[ievent][j]; k < m_idx_edep[ievent][j+1]+1; k++) 
+          {
+			
+			      event->GetEntry(k);
+            int cell_idx = int(event->cell_no);
+
+            // Calculate cublet_idx
+            int z_idx = cell_idx / 10000;
+            int y_idx = (cell_idx - z_idx * 10000) / 100;
+            int x_idx = cell_idx - z_idx * 10000 - y_idx * 100;
+
+            int cublet_idx = x_idx / 10 + (y_idx / 10) * 10 + (z_idx / 10) * 100;
+
+            int layer_cublet_idx = cublet_idx%100;
+
+            int x = layer_cublet_idx % 10; 
+            int y = layer_cublet_idx/10;
+
+            double E = (event->edep)/max_event; //average absorbed energy
+
+			      histoCublet->Fill(x, y, E);
+        	}	  
+    	} // end of for loop
+
+	    ievent++;
+  	} while (ievent < max_event);
+
+    TCanvas *canvas = new TCanvas("canvas", "Scatter Plot", 600, 600);
+
+    histoCublet->Draw("COLZ");
+    histoCublet->SetMarkerStyle(21);
+    histoCublet->SetMarkerSize(2);
+    histoCublet->SetMarkerColor(kRed);
+    
+    canvas->SetLogz();
+    canvas->Update();
+    canvas->Draw();
+    canvas->SaveAs("Edep_energyDistribution_Cublet.png");
 
   	// Stop measuring time
   	auto end_time = std::chrono::high_resolution_clock::now();
@@ -133,16 +208,25 @@ std::map<int, vector<UInt_t> > map_indices(T event, int entries) {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 int main(int argc, char* argv[]) {
     // Check if the file path is provided as a command-line argument
-    if (argc != 2) {
-        std::cerr << "Usage: " << argv[0] << " <filePath>" << std::endl;
+    if (argc != 3) {
+        std::cerr << "Usage: " << argv[0] << " <string filePath>" << " <bool cub_repr>"<<std::endl;
         return 1; // Return a non-zero error code
     }
 
     // Use the file path provided as a command-line argument
     std::string filePath = argv[1];
-
-    // Call the plotEnergy function with the file path converted to const char*
-    plotEnergy(filePath.c_str());
+    bool cub_repr = argv[2];
+    
+    if (cub_repr == true)
+    {
+      std::cout << "Choosen representation: cubelets" << std::endl;
+      plotEnergyCublet(filePath.c_str());
+    }
+    else 
+    {
+      std::cout << "Choosen representation: cells" << std::endl;
+      plotEnergyCell(filePath.c_str());
+    }
 
     return 0;
 }
