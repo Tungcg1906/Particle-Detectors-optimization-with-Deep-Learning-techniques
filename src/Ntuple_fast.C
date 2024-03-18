@@ -7,11 +7,13 @@
 // for 5 events -> 576 secs to finish
 /////////////////////////////////////////////////////////////////
 #include <iostream>
+#include <fstream>
 #include <chrono>
 #include <algorithm>
 #include <TFile.h>
 #include <TTree.h>
 #include <string>
+#include <sstream>
 #include <vector>
 #include <utility> 
 #include <TSystem.h>
@@ -28,11 +30,11 @@
 
 using namespace std;
 
-static int max_event = 100;
+static int max_event = 5;
 template <typename T>
-std::map<int, vector<UInt_t> > map_indices(T event, int entries);
+std::map<int, vector<UInt_t> > map_indices(T& event, int entries, int mode=0, std::string filename="");
 // Declare function
-void processRootFile(const char* filename, TTree* outputTree);
+void processRootFile(const char* filename, TTree* outputTree, int map_mode=0);
 void fill_n_tuple(std::vector<int>& eventID, std::vector<int>& cell_idx, std::vector<int>& cells_in_cublet, 
 		  std::vector<int>& cublet_idx, std::vector<double>& e_in_cell, std::vector<double>& Te_in_cell,
 		  std::vector<int>& Tn_in_cell, std::vector<int>& Tcublet_idx, std::vector<int>& Tcells_in_cuble, std::vector<int>& TeventID,
@@ -43,7 +45,7 @@ void cublet_info(int cell_idx, std::vector<int>& cublet_idx, std::vector<int>& c
 void cublet_part_info(int picell, std::vector<int>& picublet_id, std::vector<int>& picell_id);
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
-void processRootFile(const char* filename, TTree* outputTree) {
+void processRootFile(const char* filename, TTree* outputTree, int map_mode) {
  
   // Start measuring time
   auto start_time = std::chrono::high_resolution_clock::now();
@@ -98,9 +100,11 @@ void processRootFile(const char* filename, TTree* outputTree) {
   outputTree->Branch("Tphoton", &Tphoton);
 
   // Map the entries of trees
-  std::map<int, std::vector<UInt_t> > m_idx_edep = map_indices(event, entries);
+  std::string map_name(filename);
+  map_name .erase(map_name.size()-5);
+  std::map<int, std::vector<UInt_t> > m_idx_edep = map_indices(event, entries, map_mode, map_name+"_edepMap.txt");
   std::cout << "First index map complete" << std::endl;
-  std::map<int, std::vector<UInt_t> > m_idx_pi   = map_indices(pievent, pientries);
+  std::map<int, std::vector<UInt_t> > m_idx_pi   = map_indices(pievent, pientries, map_mode, map_name+"_piMap.txt" );
   std::cout << "Second index map complete" << std::endl;
   
   int ievent = 0;
@@ -273,28 +277,76 @@ void fill_n_tuple(std::vector<int>& eventID, std::vector<int>& cell_idx, std::ve
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 template <typename T>
-std::map<int, vector<UInt_t> > map_indices(T event, int entries) {
+std::map<int, vector<UInt_t> > map_indices(T& event, int entries, int mode, std::string filename) {
 
   std::map<int, std::vector<UInt_t> > map_idx = {};
-  int prev_id = -1;
-  for (int j = 0; j < entries; j++) {
-    event->GetEntry(j);
-    int curr_id = event->event_id;
-    // check if new evt index
-    if (map_idx.find(curr_id) == map_idx.end()) {
-      std::vector<UInt_t> v_temp = {};
-      map_idx[curr_id] = v_temp;
-    }
-    // check if change point
-    if (prev_id != curr_id) {
-      map_idx[curr_id].push_back(j);
-      if (prev_id != -1) {
-        map_idx[prev_id].push_back(j-1);
+
+  // mode 0 and 1: compute index map from scratch
+  if (mode!=2) {
+    int prev_id = -1;
+    for (int j = 0; j < entries; j++) {
+      event->GetEntry(j);
+      int curr_id = event->event_id;
+      // check if new evt index
+      if (map_idx.find(curr_id) == map_idx.end()) {
+        std::vector<UInt_t> v_temp = {};
+        map_idx[curr_id] = v_temp;
       }
-      prev_id = curr_id;
+      // check if change point
+      if (prev_id != curr_id) {
+        map_idx[curr_id].push_back(j);
+        if (prev_id != -1) {
+          map_idx[prev_id].push_back(j-1);
+        }
+        prev_id = curr_id;
+      }
+    }
+    map_idx[prev_id].push_back(entries-1);
+    
+    // mode 1: print map to file for later use
+    if (mode==1) {
+      std::ofstream outputFile(filename);
+      if (!outputFile) {
+        std::cerr << "Error: Unable to open the file for writing." << std::endl;
+        return(map_idx);
+      }
+      for (const auto& pair : map_idx) {
+        outputFile << pair.first << '\t';
+        for (int j = 0; j < pair.second.size(); j++) {
+          outputFile << pair.second[j] << "   ";
+        }
+        outputFile << std::endl;
+      }
+      outputFile.close();
+      std::cout << "Map saved successfully" << std::endl;
     }
   }
-  map_idx[prev_id].push_back(entries-1);
+
+  // mode 2: read map from file
+  if (mode==2) {
+    std::ifstream inputFile(filename);
+    if (!inputFile) {
+      std::cerr << "Error: Unable to open the file for reading." << std::endl;
+      return(map_idx);
+    }
+
+    std::string line;
+    while (std::getline(inputFile, line)) {
+      std::istringstream iss(line);
+      int key;
+      std::vector<UInt_t> value;
+      UInt_t v;
+      if (!(iss >> key)) {
+        std::cerr << "Error: Unable to parse line: " << line << std::endl;
+        continue;
+      }
+      while (iss >> v) {
+          value.push_back(v);
+      }
+      map_idx[key] = value;
+    }
+   inputFile.close();
+  }
   
   return(map_idx);
 }
@@ -344,10 +396,18 @@ void cublet_part_info(int picell, std::vector<int>& picublet_idx, std::vector<in
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 int main(int argc, char* argv[]) {
-  const char* inputFolder = "/lustre/cmswork/xnguyen/data/";
-  const char* outputFolder = "/lustre/cmswork/xnguyen/data/cublet_";
+  const char* inputFolder = "../Data/";
+  const char* outputFolder = "../Data/cublet_";
   //const char* folders[] = {"kaon", "neutron", "pion", "proton"};
   const char* folders[] = {"kaon"};
+
+  int map_mode = 0;
+  for (int i = 1; i < argc; i++) {
+    std::string flag(argv[i]);
+    if (flag.find("map_mode") != string::npos) {
+      map_mode = std::stoi(flag.substr(11));
+    }
+  }
 
   for (const char* folder : folders) {
     std::string folderPath = std::string(inputFolder) + folder + "/";
@@ -357,26 +417,26 @@ int main(int argc, char* argv[]) {
       struct dirent* entry;
       while ((entry = readdir(dir)) != nullptr) {
         if (entry->d_type == DT_REG && std::string(entry->d_name).find(".root") != std::string::npos) {
-	  std::string filePath = folderPath + entry->d_name;
-	  std::string outputFilePath = outputFolderPath + "cublet_" + std::string(entry->d_name);
+	      std::string filePath = folderPath + entry->d_name;
+	      std::string outputFilePath = outputFolderPath + "cublet_" + std::string(entry->d_name);
 
-	  // Open the output file for writing
+	      // Open the output file for writing
           TFile outputFile(outputFilePath.c_str(), "RECREATE");
           TTree* outputTree = new TTree("outputTree", "Output Tree Description");
 	    
           // Process the root file
-          processRootFile(filePath.c_str(), outputTree);
+          processRootFile(filePath.c_str(), outputTree, map_mode);
 	  
           // Print the output file path before processing                                                                                                                                                  
-	  std::cout << "Processing file: " << outputFilePath << std::endl;
+	      std::cout << "Processing file: " << outputFilePath << std::endl;
 
           // Close the output file and clean up memory
           outputFile.Write();  // Write the TTree to the file
           outputFile.Close();
-	  // delete outputTree;
+	      // delete outputTree;
 
           // Print completion message
-	  std::cout << "File processing completed." << std::endl;
+	      std::cout << "File processing completed." << std::endl;
         }
       }
       closedir(dir);
