@@ -1,6 +1,10 @@
 {
     "files.associations": {
         "output_energyPlot.C": "cpp",
-        "Edep_energyPlot.C": "cpp"
+        "Edep_energyPlot.C": "cpp",
+        "Ntuple_5.C": "cpp",
+        "Ntuple_4.C": "cpp",
+        "vector": "cpp",
+        "Ntuple_fast.C": "cpp"
     }
 }
