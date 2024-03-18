@@ -4,7 +4,7 @@
 // Vectors are declared locally inside the funciton
 // To compile: g++ -Ofast -g Ntuple_fast.C Edep.C part_info.C `root-config --cflags` -o Ntuple_fast -L$(root-config --libdir) -Wl,-rpath,$(root-config --libdir) -lCore -lRIO -lNet -lHist -lGraf -lGraf3d -lGpad -lTree -lRint -lPostscript -lMatrix -lPhysics -lMathCore -lThread -lMultiProc -lROOTVecOps -pthread -lm -ldl
 // Example: kaon_3.root
-// for 5 events -> 276 secs to finish
+// for 5 events -> 576 secs to finish
 /////////////////////////////////////////////////////////////////
 #include <iostream>
 #include <chrono>
