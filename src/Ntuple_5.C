@@ -91,6 +91,8 @@ void processRootFile(const char* filename, TTree* outputTree) {
   int ievent = 0;
   int epsilon = 1;
   bool data = false;
+  int start_idx_edep = 0;
+  int start_idx_pi   = 0;
   do {
     data = false;
     e_in_cell.clear();
@@ -100,32 +102,40 @@ void processRootFile(const char* filename, TTree* outputTree) {
     picell.clear();
     pimom.clear();
 
-    for (int j = 0; j < entries; j++) {
+    for (int j = start_idx_edep; j < entries; j++) {
       event->GetEntry(j);
       if (event->event_id == ievent) {
-	// Add the current entry to vectors
-	e_in_cell.push_back(event->edep);
-	cell_idx.push_back(event->cell_no);
-	eventID.push_back(event->event_id);
-	data = true;
+	    // Add the current entry to vectors
+	    e_in_cell.push_back(event->edep);
+	    cell_idx.push_back(event->cell_no);
+	    eventID.push_back(event->event_id);
+	    data = true;
       } // end if loop
+      else {
+        start_idx_edep = j;
+        break;
+      } // end else
     } // end of for loop on all data file information
 
-    for (int j = 0; j < pientries; j++) {
+    for (int j = start_idx_pi; j < pientries; j++) {
       pievent->GetEntry(j);
       if (pievent->event_id == ievent) {
-	// Add the current entry to vectors
-	pipdg.push_back(pievent->pdg_id);
-	double x = pievent->pos_x;
-	double y = pievent->pos_y;
-	double z = pievent->pos_z;
-	int ix = (x + 150 - epsilon) / 3;
-	int iy = (-y + 150 - epsilon) / 3;
-	int iz = (z - epsilon) / 12;
-	picell.push_back(ix + 100 * iy + 10000 * iz);
-	pimom.push_back(pievent->mom);
-	data = true;
+	    // Add the current entry to vectors
+	    pipdg.push_back(pievent->pdg_id);
+	    double x = pievent->pos_x;
+	    double y = pievent->pos_y;
+	    double z = pievent->pos_z;
+	    int ix = (x + 150 - epsilon) / 3;
+	    int iy = (-y + 150 - epsilon) / 3;
+	    int iz = (z - epsilon) / 12;
+	    picell.push_back(ix + 100 * iy + 10000 * iz);
+	    pimom.push_back(pievent->mom);
+	    data = true;
       } // end if loop
+      else {
+        start_idx_pi = j;
+        break;
+      } // end else
     } // end of for loop on all data file information
     
     // Fill the new Ntuples
@@ -139,6 +149,8 @@ void processRootFile(const char* filename, TTree* outputTree) {
 	      << " , size of Tphoton : " << Tphoton.size() << std::endl;
 
     outputTree->Fill();
+
+    std::cout << "Filled correctly!" <<std::endl;
     ievent++;
   } while (data && ievent < max_event);
   
@@ -186,14 +198,14 @@ void fill_n_tuple(TTree* outputTree){
       int ne = 1;
       done[i] = true;
       for (int j = i + 1; j < cublet_idx.size(); j++){
-	if (!done[j]) {
-	  if (cublet_idx.at(j) == cublet_idx.at(i) && cells_in_cublet.at(j) == cells_in_cublet.at(i)){
-	    E += e_in_cell.at(j);
-	    ne++;
-	    done[j] = true;
-	  }// end if
-	} // end if j is !done
-      }// end for j loop
+	    if (!done[j]) {
+	      if (cublet_idx.at(j) == cublet_idx.at(i) && cells_in_cublet.at(j) == cells_in_cublet.at(i)){
+	        E += e_in_cell.at(j);
+	        ne++;
+	        done[j] = true;
+	      } // end if
+	    } // end if j is !done
+      } // end for j loop
 
       int kmax = -1;
       double maxmom = 0;
@@ -201,24 +213,24 @@ void fill_n_tuple(TTree* outputTree){
 
       // Fetch pdg id of highest momentum p; article with same cell location, from part_info block 
       for (int k = 0; k < picublet_idx.size(); k++) {
-	if (cublet_idx.at(i) == picublet_idx.at(k) && cells_in_cublet.at(i) == picells_in_cublet.at(k)) {
-	  if (pipdg.at(k) == 22){
+	    if (cublet_idx.at(i) == picublet_idx.at(k) && cells_in_cublet.at(i) == picells_in_cublet.at(k)) {
+	      if (pipdg.at(k) == 22){
             photonNo++;
           }// end if pdg == 22  
 
-	  if (maxmom < pimom.at(k)) {
-	    maxmom = pimom.at(k);
-	    kmax = k;
-	  }// end if maxmom < pimom
-	}// end if i == k
+	      if (maxmom < pimom.at(k)) {
+	        maxmom = pimom.at(k);
+	        kmax = k;
+	      }// end if maxmom < pimom
+	    }// end if i == k
       }// end for k loop
 
       // Store the vectors
       if (kmax != -1){
-	Tpdg_id.push_back(pipdg.at(kmax));
-	Tmom.push_back(maxmom);
+	    Tpdg_id.push_back(pipdg.at(kmax));
+	    Tmom.push_back(maxmom);
      
-	// Store the vectors
+	    // Store the vectors
         Tcublet_idx.push_back(cublet_idx.at(i));
         Tcells_in_cublet.push_back(cells_in_cublet.at(i));
         TeventID.push_back(eventID.at(i));
@@ -276,8 +288,8 @@ void cublet_part_info(int picell){
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 int main(int argc, char* argv[]) {
-  const char* inputFolder = "/lustre/cmswork/xnguyen/data/";
-  const char* outputFolder = "/lustre/cmswork/xnguyen/data/cublet_";
+  const char* inputFolder = "/lustre/cmswork/elupi/xnguyen/data/";
+  const char* outputFolder = "/lustre/cmswork/elupi/xnguyen/data/cublet_";
   //const char* folders[] = {"kaon", "neutron", "pion", "proton"};
   const char* folders[] = {"kaon"};
 
@@ -289,10 +301,10 @@ int main(int argc, char* argv[]) {
       struct dirent* entry;
       while ((entry = readdir(dir)) != nullptr) {
         if (entry->d_type == DT_REG && std::string(entry->d_name).find(".root") != std::string::npos) {
-	  std::string filePath = folderPath + entry->d_name;
-	  std::string outputFilePath = outputFolderPath + "cublet_" + std::string(entry->d_name);
+	      std::string filePath = folderPath + entry->d_name;
+	      std::string outputFilePath = outputFolderPath + "cublet_" + std::string(entry->d_name);
 
-	  // Open the output file for writing
+	      // Open the output file for writing
           TFile outputFile(outputFilePath.c_str(), "RECREATE");
           TTree* outputTree = new TTree("outputTree", "Output Tree Description");
 	    
@@ -300,15 +312,15 @@ int main(int argc, char* argv[]) {
           processRootFile(filePath.c_str(), outputTree);
 	  
           // Print the output file path before processing                                                                                                                                                  
-	  std::cout << "Processing file: " << outputFilePath << std::endl;
+	      std::cout << "Processing file: " << outputFilePath << std::endl;
 
           // Close the output file and clean up memory
           outputFile.Write();  // Write the TTree to the file
           outputFile.Close();
-	  // delete outputTree;
+	      // delete outputTree;
 
           // Print completion message
-	  std::cout << "File processing completed." << std::endl;
+	      std::cout << "File processing completed." << std::endl;
         }
       }
       closedir(dir);
