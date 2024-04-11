@@ -5,6 +5,7 @@
         "Ntuple_5.C": "cpp",
         "Ntuple_4.C": "cpp",
         "vector": "cpp",
-        "Ntuple_fast.C": "cpp"
+        "Ntuple_fast.C": "cpp",
+        "readNtuple.C": "cpp"
     }
 }
