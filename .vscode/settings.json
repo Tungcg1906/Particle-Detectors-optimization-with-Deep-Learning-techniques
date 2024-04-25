@@ -6,6 +6,8 @@
         "Ntuple_4.C": "cpp",
         "vector": "cpp",
         "Ntuple_fast.C": "cpp",
-        "readNtuple.C": "cpp"
+        "readNtuple.C": "cpp",
+        "Ntuple_2.C": "cpp",
+        "Ntuple_3.C": "cpp"
     }
 }
