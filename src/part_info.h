@@ -23,25 +23,27 @@ public :
 
    // Declaration of leaf types
    Double_t        event_id;
-   Double_t        pdg_id;
-   Double_t        Track_id;
+   Double_t        part_id;
+   Double_t        track_id;
    Double_t        parent_id;
-   Double_t        pos_x;
-   Double_t        pos_y;
-   Double_t        pos_z;
    Double_t        mom;
    Double_t        edepo;
+   Double_t        deltae;
+   Double_t        global_t;
+   Double_t        cublet_idx;
+   Double_t        cell_in_cub;
 
    // List of branches
    TBranch        *b_event_id;   //!
-   TBranch        *b_pdg_id;   //!
-   TBranch        *b_Track_id;   //!
+   TBranch        *b_part_id;   //!
+   TBranch        *b_track_id;   //!
    TBranch        *b_parent_id;   //!
-   TBranch        *b_pos_x;   //!
-   TBranch        *b_pos_y;   //!
-   TBranch        *b_pos_z;   //!
    TBranch        *b_mom;   //!
    TBranch        *b_edepo;   //!
+   TBranch        *b_deltae;
+   TBranch        *b_global_t;
+   TBranch        *b_cublet_idx;
+   TBranch        *b_cell_in_cub;
 
    part_info(TTree *tree=0);
    virtual ~part_info();
@@ -62,9 +64,9 @@ part_info::part_info(TTree *tree) : fChain(0)
 // if parameter tree is not specified (or zero), connect the file
 // used to generate this class and read the Tree.
    if (tree == 0) {
-      TFile *f = (TFile*)gROOT->GetListOfFiles()->FindObject("kaon_12.root");
+      TFile *f = (TFile*)gROOT->GetListOfFiles()->FindObject("hadron.root");
       if (!f || !f->IsOpen()) {
-         f = new TFile("kaon_12.root");
+         f = new TFile("hadron.root");
       }
       f->GetObject("part_info",tree);
 
@@ -113,15 +115,16 @@ void part_info::Init(TTree *tree)
    fCurrent = -1;
    fChain->SetMakeClass(1);
 
-   fChain->SetBranchAddress("event_id", &event_id, &b_event_id);
-   fChain->SetBranchAddress("pdg_id", &pdg_id, &b_pdg_id);
-   fChain->SetBranchAddress("Track_id", &Track_id, &b_Track_id);
-   fChain->SetBranchAddress("parent_id", &parent_id, &b_parent_id);
-   fChain->SetBranchAddress("pos_x", &pos_x, &b_pos_x);
-   fChain->SetBranchAddress("pos_y", &pos_y, &b_pos_y);
-   fChain->SetBranchAddress("pos_z", &pos_z, &b_pos_z);
-   fChain->SetBranchAddress("mom", &mom, &b_mom);
-   fChain->SetBranchAddress("edepo", &edepo, &b_edepo);
+   fChain->SetBranchAddress("event_id",      &event_id,     &b_event_id);
+   fChain->SetBranchAddress("part_id",       &part_id,      &b_part_id);
+   fChain->SetBranchAddress("track_id",      &track_id,     &b_track_id);
+   fChain->SetBranchAddress("parent_id",     &parent_id,    &b_parent_id);
+   fChain->SetBranchAddress("mom",           &mom,          &b_mom);
+   fChain->SetBranchAddress("edepo",         &edepo,        &b_edepo);
+   fChain->SetBranchAddress("deltae",        &deltae,       &b_deltae);
+   fChain->SetBranchAddress("global_t",      &global_t,     &b_global_t);
+   fChain->SetBranchAddress("cublet_idx",    &cublet_idx,   &b_cublet_idx);
+   fChain->SetBranchAddress("cell_in_cub",   &cell_in_cub,  &b_cell_in_cub);
    Notify();
 }
 

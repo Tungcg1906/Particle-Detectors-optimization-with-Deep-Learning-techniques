@@ -8,6 +8,8 @@
         "Ntuple_fast.C": "cpp",
         "readNtuple.C": "cpp",
         "Ntuple_2.C": "cpp",
-        "Ntuple_3.C": "cpp"
+        "Ntuple_3.C": "cpp",
+        "part_info copy.C": "cpp",
+        "part_info.C": "cpp"
     }
 }
