@@ -36,5 +36,5 @@
 2. Create subdirectories:
    - /lustre/cmswork/xnguyen/Outputs     --> contains dumps from runs of the program
    - /user/cmswork/xnguyen/data          --> contains root files in output
-3. Compile with: ```> g++ -Ofast -g Ntuple_4.C Edep.C part_info.C `root-config --cflags` -o Ntuple_4 -L$(root-config --libdir) -Wl,-rpath,$(root-config --libdir) -lCore -lRIO -lNet -lHist -lGraf -lGraf3d -lGpad -lTree -lRint -lPostscript -lMatrix -lPhysics -lMathCore -lThread -lMultiProc -lROOTVecOps -pthread -lm -ldl```
-4. Run with: `>./Ntuple_4` or `>nohup ./Ntuple_4 &` to make the program runs into background.
+3. Compile with: ```> g++ -Ofast -g Ntuple.C part_info.C `root-config --cflags` -o Ntuple -L$(root-config --libdir) -Wl,-rpath,$(root-config --libdir) -lCore -lRIO -lNet -lHist -lGraf -lGraf3d -lGpad -lTree -lRint -lPostscript -lMatrix -lPhysics -lMathCore -lThread -lMultiProc -lROOTVecOps -pthread -lm -ldl```
+4. Run with: `>./Ntuple -f input_file -o output_file -e 1000 -m 0` or `>nohup ./Ntuple -f input_file -o output_file -e 1000 -m 0 &` to make the program runs into background.
