@@ -9,7 +9,12 @@ AUC vs cell's size             |  Hadronic calorimeter
 We want to answer a very basic question: can we distinguish those 4 particle species based on the pattern of energy release in an arbitrarily granular device? And if so, how does the size of the cells affect this capability?
 The $\textbf{«money plot»}$ is thus one where we put on the y axis some measures of discrimination (1/2, 1/3, 1/4, 2/3, 3/4 or some combination of the six) and on the x axis the cell size, so we can find out whether there is merit in keeping the cell size below the value when information is irrecoverable.
 
-📝 [Thing to do phase 1](https://www.notion.so/Thing-to-do-phase-1-4dc2e92a875243aa9f90220557aa1084?pvs=21)
+<table>
+  <tr>
+    <td><img src="https://github.com/Tungcg1906/Particle-Detectors-optimization-with-Deep-Learning-techniques/blob/main/images/combined_plots.gif" alt="Combined Plots" width="400"></td>
+    <td><img src="https://github.com/Tungcg1906/Particle-Detectors-optimization-with-Deep-Learning-techniques/blob/main/images/combined_plots_XY.gif" alt="Combined Plots XY" width="400"></td>
+  </tr>
+</table>
 
 ## Phase 2
 
