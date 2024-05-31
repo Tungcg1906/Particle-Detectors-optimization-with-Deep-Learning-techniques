@@ -22,8 +22,7 @@ Once we have this information, we can extend the study to consider more audaciou
 To understand the above, note that collider detectors «track» charged particles in very lightweight media (gas or air-spaced silicon sensors) by recording their ionization trails, and only after this destroy them in calorimeters, measuring their ionization trails, and only after this destroy them in calorimeters, measure their energy. Adding material to a tracker has until now been anathema, as nuclear interactions $\textbf{«spoil»}$ the precise track reconstruction – but AI can make sense of them, and use it to do particle ID!
 The final goal is thus to work toward a detector of the future, which integrates the two techniques into one, thanks to the more power pattern recognition capabilities we have today.
 
-📝 [Thing to do phase 2](https://www.notion.so/Thing-to-do-phase-2-f1320184563d4798adbf5dcf8ae0456a?pvs=21)
 
-## [How to execute the code](https://github.com/Tungcg1906/Particle-Detectors-optimization-with-Deep-Learning-techniques/blob/main/src/README.md)
+## [Execute the code](https://github.com/Tungcg1906/Particle-Detectors-optimization-with-Deep-Learning-techniques/blob/main/src/README.md)
 
-## [How to generate the data](https://github.com/Tungcg1906/GEANT4-simulation)
+## [Generate the data](https://github.com/Tungcg1906/GEANT4-simulation)
