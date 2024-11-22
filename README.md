@@ -17,8 +17,6 @@ The $\textbf{«money plot»}$ is thus one where we put on the y axis some measur
 </table>
 
 ## Approach with AD
-![](https://github.com/Tungcg1906/Particle-Detectors-optimization-with-Deep-Learning-techniques/blob/main/images/granular-calo.png) 
-
 
 ## [Execute the code](https://github.com/Tungcg1906/Particle-Detectors-optimization-with-Deep-Learning-techniques/blob/main/src/README.md)
 
